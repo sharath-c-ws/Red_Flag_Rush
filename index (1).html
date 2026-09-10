@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A fast swipe-card game for Cyber Awareness Month — trust it or block it across 14 real-world phishing, smishing, and scam scenarios.">
+<title>Red Flag Rush</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+  :root{
+    --bg:#000000;
+    --bg-2:#0a0612;
+    --surface:#241238;
+    --surface-2:#2f1848;
+    --surface-3:#3a2058;
+    --line:#43265f;
+    --line-soft:#33194a;
+    --ink:#f5f1fb;
+    --ink-dim:#c1acd9;
+    --ink-faint:#8870a8;
+    --trust:#29e2c9;
+    --trust-soft:#123832;
+    --trust-line:#1f6e60;
+    --block:#ff4d8d;
+    --block-soft:#3a1226;
+    --block-line:#7a2949;
+    --streak:#ffd23f;
+    --streak-soft:#3a3116;
+    --radius-lg:26px;
+    --radius-md:16px;
+    --radius-sm:10px;
+    --font-display:'Unbounded',system-ui,sans-serif;
+    --font-body:'Manrope',system-ui,sans-serif;
+    --font-mono:'Space Mono',ui-monospace,monospace;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    margin:0;
+  }
+  h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;}
+  p{margin:0;line-height:1.55;}
+  button{font-family:inherit;cursor:pointer;}
+  :focus-visible{outline:3px solid var(--streak);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important;} }
+  [hidden]{display:none!important;}
+
+  .stage{min-height:100dvh;display:flex;justify-content:center;padding:32px 16px 44px;}
+  .shell{width:100%;max-width:460px;}
+
+  .brand-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand-badge{
+    width:34px;height:34px;border-radius:10px;
+    background:linear-gradient(135deg,var(--block),var(--trust));
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;
+  }
+  .brand-name{font-family:var(--font-display);font-weight:700;font-size:16.5px;}
+  .brand-sub{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);}
+
+  .hud{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    font-family:var(--font-mono);
+    font-size:13.5px;
+    color:var(--ink-dim);
+    background:var(--surface);
+    border:1px solid var(--line-soft);
+    border-radius:999px;
+    padding:9px 16px;
+    margin-bottom:18px;
+    font-variant-numeric:tabular-nums;
+  }
+  .hud.show{display:flex;}
+  .hud strong{color:var(--ink);}
+  .hud .streakflame{color:var(--streak);}
+
+  .progress-track{
+    height:5px;border-radius:4px;background:var(--surface-2);
+    margin-bottom:22px;overflow:hidden;display:none;
+  }
+  .progress-track.show{display:block;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--trust),var(--streak));border-radius:4px;transition:width .35s ease;}
+
+  /* ---------- Intro ---------- */
+  .intro-card{
+    background:var(--surface);
+    border:1px solid var(--line-soft);
+    border-radius:var(--radius-lg);
+    padding:28px 24px 26px;
+  }
+  .eyebrow{
+    font-family:var(--font-mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--streak);display:block;margin-bottom:10px;
+  }
+  .intro-card h1{font-size:clamp(1.7rem,7vw,2.15rem);letter-spacing:-.01em;}
+  .intro-lede{margin-top:12px;color:var(--ink-dim);font-size:16px;}
+
+  .demo-row{
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    margin:24px 0 22px;
+  }
+  .demo-pill{
+    font-family:var(--font-mono);font-size:12.5px;font-weight:700;
+    padding:8px 14px;border-radius:999px;display:flex;align-items:center;gap:6px;
+  }
+  .demo-pill.block{background:var(--block-soft);color:var(--block);border:1px solid var(--block-line);}
+  .demo-pill.trust{background:var(--trust-soft);color:var(--trust);border:1px solid var(--trust-line);}
+  .demo-card-mini{
+    width:64px;height:80px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:22px;opacity:.6;
+  }
+
+  .btn{border:none;border-radius:14px;padding:16px 22px;font-size:16.5px;font-weight:700;font-family:var(--font-display);transition:transform .12s ease, filter .12s ease;}
+  .btn:hover{filter:brightness(1.08);}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--streak);color:#241a00;width:100%;}
+
+  .topics-line{margin-top:16px;font-size:13px;color:var(--ink-faint);text-align:center;}
+
+  /* ---------- Round ---------- */
+  .deck{position:relative;height:322px;margin-bottom:20px;}
+  .deck-shadow{
+    position:absolute;inset:0;border-radius:var(--radius-lg);
+    background:var(--surface-2);border:1px solid var(--line-soft);
+  }
+  .deck-shadow.s1{transform:scale(.96) translateY(10px);opacity:.7;}
+  .deck-shadow.s2{transform:scale(.92) translateY(20px);opacity:.4;}
+
+  .card{
+    position:absolute;inset:0;
+    background:var(--surface);
+    border:1px solid var(--line-soft);
+    border-radius:var(--radius-lg);
+    padding:22px 22px 20px;
+    display:flex;flex-direction:column;
+    touch-action:pan-y;
+    user-select:none;
+    box-shadow:0 20px 50px -18px rgba(0,0,0,.55);
+    transition:transform .28s cubic-bezier(.2,.8,.3,1);
+  }
+  .card-kind{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:4px;
+  }
+  .card-kind .ic{font-size:16.5px;}
+  .card-content{flex:1;display:flex;flex-direction:column;justify-content:center;gap:9px;min-height:0;}
+  .card-sender{font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--ink);}
+  .card-title{font-weight:700;font-size:16.5px;color:var(--ink);}
+  .card-body{font-size:15.5px;color:var(--ink-dim);}
+  .card-meta{padding-top:14px;margin-top:14px;font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);border-top:1px solid var(--line-soft);}
+  .qr-grid{
+    display:grid;grid-template-columns:repeat(6,1fr);gap:3px;
+    width:96px;height:96px;margin-top:10px;padding:8px;background:#fff;border-radius:8px;
+  }
+  .qr-grid span{border-radius:1px;}
+  .qr-grid span.on{background:#170b28;}
+  .qr-grid span.off{background:transparent;}
+
+  .stamp{
+    position:absolute;top:26px;
+    font-family:var(--font-display);font-weight:800;font-size:22px;
+    padding:6px 14px;border-radius:10px;border:3px solid;
+    transform:rotate(-18deg);opacity:0;pointer-events:none;
+  }
+  .stamp.trust{right:20px;color:var(--trust);border-color:var(--trust);transform:rotate(14deg);}
+  .stamp.block{left:20px;color:var(--block);border-color:var(--block);transform:rotate(-14deg);}
+
+  .decision-row{display:flex;align-items:center;justify-content:center;gap:22px;margin-bottom:18px;}
+  .swipe-btn{
+    width:60px;height:60px;border-radius:50%;
+    border:1.5px solid var(--line);
+    background:var(--surface);
+    color:var(--ink);
+    font-size:24px;
+    line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .12s ease, border-color .12s ease, background .12s ease, filter .12s ease;
+  }
+  .swipe-btn.block{color:var(--block);border-color:var(--block-line);background:var(--block-soft);}
+  .swipe-btn.trust{color:var(--trust);border-color:var(--trust-line);background:var(--trust-soft);}
+  .swipe-btn.block:hover{filter:brightness(1.2);}
+  .swipe-btn.trust:hover{filter:brightness(1.2);}
+  .swipe-btn:active{transform:scale(.92);}
+  .swipe-hint{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);text-align:center;margin-top:6px;}
+  .swipe-btns-wrap{display:flex;gap:22px;}
+  .swipe-col{display:flex;flex-direction:column;align-items:center;}
+
+  .feedback-strip{
+    background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius-md);
+    padding:14px 16px;font-size:14.5px;color:var(--ink-dim);
+  }
+  .feedback-strip .fb-head{
+    display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:700;font-size:15px;margin-bottom:6px;
+  }
+  .feedback-strip.good .fb-head{color:var(--trust);}
+  .feedback-strip.bad .fb-head{color:var(--block);}
+  .feedback-strip.placeholder{color:var(--ink-faint);text-align:center;font-family:var(--font-mono);font-size:13px;}
+
+  /* ---------- Final ---------- */
+  .final-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius-lg);padding:30px 24px 26px;text-align:center;}
+  .grade-badge{display:inline-block;font-family:var(--font-display);font-weight:800;font-size:16px;padding:7px 18px;border-radius:30px;margin-bottom:14px;}
+  .final-pct{font-family:var(--font-mono);font-size:clamp(2.6rem,12vw,3.4rem);font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
+  .final-pct span{font-size:.35em;color:var(--ink-faint);}
+  .final-sub{margin-top:8px;color:var(--ink-dim);font-size:15px;}
+
+  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:22px 0;}
+  .stat-tile{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:var(--radius-md);padding:14px;}
+  .stat-tile .num{font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--streak);font-variant-numeric:tabular-nums;}
+  .stat-tile .lab{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+
+  .recap-list{text-align:left;margin-bottom:22px;}
+  .recap-item{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line-soft);font-size:14px;color:var(--ink-dim);}
+  .recap-item:first-child{border-top:none;}
+  .recap-item .ric{flex-shrink:0;}
+  .recap-title{font-family:var(--font-display);font-weight:700;font-size:14.5px;color:var(--ink);margin-bottom:14px;text-align:left;}
+
+  @media (max-width:400px){
+    .deck{height:300px;}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="shell">
+    <div class="brand-row">
+      <div class="brand">
+        <div class="brand-badge">⚡</div>
+        <div>
+          <div class="brand-name">Red Flag Rush</div>
+          <div class="brand-sub">Woodside Cyber Awareness Month</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud" id="hud">
+      <span><strong id="hudRound">1</strong>/14</span>
+      <span class="streakflame">🔥 <strong id="hudStreak">0</strong></span>
+      <span><strong id="hudScore">0</strong> pts</span>
+    </div>
+    <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+    <!-- INTRO -->
+    <section id="phase-intro">
+      <div class="intro-card">
+        <span class="eyebrow">Trust your gut — fast</span>
+        <h1>Swipe it or block it.</h1>
+        <p class="intro-lede">14 real-looking messages, calls, texts and pop-ups fly by one at a time. Swipe right (or tap ✓) if you'd trust it. Swipe left (or tap ✕) if you'd block it. No penalties for a wrong guess — just see how sharp your instincts are.</p>
+
+        <div class="demo-row">
+          <div class="demo-pill block">✕ BLOCK</div>
+          <div class="demo-card-mini">📩</div>
+          <div class="demo-pill trust">TRUST ✓</div>
+        </div>
+
+        <button class="btn btn-primary" id="startBtn">Start the rush</button>
+        <p class="topics-line">Phishing · smishing · deepfakes · QR scams · social engineering · everyday IT</p>
+      </div>
+    </section>
+
+    <!-- ROUND -->
+    <section id="phase-round" hidden>
+      <div class="deck">
+        <div class="deck-shadow s2"></div>
+        <div class="deck-shadow s1"></div>
+        <div class="card" id="card">
+          <div class="stamp trust" id="stampTrust">TRUST</div>
+          <div class="stamp block" id="stampBlock">BLOCK</div>
+          <div class="card-kind"><span class="ic" id="cardIcon">✉️</span><span id="cardKind">Email</span></div>
+          <div class="card-content">
+            <div class="card-sender" id="cardSender"></div>
+            <div class="card-title" id="cardTitle"></div>
+            <div class="card-body" id="cardBody"></div>
+            <div id="cardExtra"></div>
+          </div>
+          <div class="card-meta" id="cardMeta"></div>
+        </div>
+      </div>
+
+      <div class="decision-row">
+        <div class="swipe-col">
+          <button class="swipe-btn block" id="blockBtn" aria-label="Block">✕</button>
+          <span class="swipe-hint">block</span>
+        </div>
+        <div class="swipe-col">
+          <button class="swipe-btn trust" id="trustBtn" aria-label="Trust">✓</button>
+          <span class="swipe-hint">trust</span>
+        </div>
+      </div>
+
+      <div class="feedback-strip placeholder" id="feedbackStrip">Swipe or tap a button to make your first call.</div>
+    </section>
+
+    <!-- FINAL -->
+    <section id="phase-final" hidden>
+      <div class="final-card">
+        <span class="grade-badge" id="gradeBadge"></span>
+        <div class="final-pct" id="finalPct"></div>
+        <p class="final-sub" id="finalSub"></p>
+
+        <div class="stat-row">
+          <div class="stat-tile"><div class="num" id="statScore">0</div><div class="lab">total points</div></div>
+          <div class="stat-tile"><div class="num" id="statStreak">0</div><div class="lab">best streak</div></div>
+        </div>
+
+        <div id="recapWrap">
+          <div class="recap-title">Worth a second look</div>
+          <div class="recap-list" id="recapList"></div>
+        </div>
+
+        <button class="btn btn-primary" id="replayBtn">Run it again</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var CARDS = [
+    {kind:"email", ic:"✉️", label:"Email", sender:"IT Service Desk", extra:"it-service@woodside-support.net", title:"Password expires in 2 hours", body:"Your account password will expire shortly. Reset immediately to avoid lockout.", meta:"received 3 min ago", correct:"block", tip:"Look-alike domain plus a manufactured 2-hour deadline — real resets come from your actual company domain with no countdown."},
+    {kind:"sms", ic:"💬", label:"Text message", sender:"+1 (302) 555-0147", title:null, body:"Your package couldn't be delivered. Pay a $2.50 customs fee to reschedule: bit.ly/pkg-fee2", meta:"unknown sender", correct:"block", tip:"A tiny “fee” texted from an unknown number is one of the most common smishing scripts — couriers don't collect fees by text link."},
+    {kind:"calendar", ic:"📅", label:"Calendar invite", sender:"Priya Nair", title:"Quarterly Planning Sync", body:"Thursday 10:00–11:00 AM · Conf Room 4B. Agenda attached.", meta:"a colleague you already work with", correct:"trust", tip:"Known sender, expected topic, no links or urgency — an ordinary invite."},
+    {kind:"call", ic:"☎️", label:"Voicemail transcript", sender:"Unknown number", title:null, body:"“Hi, it's your CEO — stuck in a meeting, need you to buy 5 gift cards right now. Don't mention this to anyone.”", meta:"38 second voicemail", correct:"block", tip:"Secrecy, gift cards, and a request that skips every approval step — classic executive impersonation, now often done with cloned AI voices."},
+    {kind:"qr", ic:"▦", label:"QR code", sender:"Sticker on a parking meter", title:"Scan to pay for parking", body:null, meta:"sticker looks slightly crooked, placed over the original code", correct:"block", tip:"A sticker slapped over an existing code is a common “quishing” move — use the official app or pay station instead."},
+    {kind:"mfa", ic:"🔐", label:"Sign-in approval", sender:"Authenticator app", title:"Approve sign-in?", body:"Chrome on Windows · Perth, WA · requested 40 seconds ago.", meta:"you just tried signing in yourself", correct:"trust", tip:"Device, location and timing all line up with something you actually just did — that's what a normal approval looks like."},
+    {kind:"dm", ic:"💼", label:"LinkedIn DM", sender:"Recruiter · 1st-degree connection", title:null, body:"“Loved your profile — $9,500/month remote role. Just complete this form with your bank details to set up payroll before the interview.”", meta:"direct message", correct:"block", tip:"No legitimate employer needs your bank details before you've even interviewed."},
+    {kind:"usb", ic:"💾", label:"Found USB drive", sender:"Left in the parking lot", title:"Label: “Q3 Payroll — Confidential”", body:null, meta:"no owner in sight", correct:"block", tip:"A found drive is a classic “USB drop” — plugging it in can run code automatically. Hand it to security instead."},
+    {kind:"browser", ic:"⚠️", label:"Browser pop-up", sender:"random-deals-site.com", title:"3 viruses found on your device", body:"Click to remove now and protect your files.", meta:"appeared while browsing", correct:"block", tip:"A webpage can't scan your device for viruses — this alert exists purely to get you to install something."},
+    {kind:"newsletter", ic:"📰", label:"Internal newsletter", sender:"Woodside Internal Comms", title:"This month's safety recap", body:"A short read on this quarter's safety wins and reminders.", meta:"monthly, as usual", correct:"trust", tip:"Routine, expected, low-stakes, and asks you to do nothing urgent."},
+    {kind:"sms", ic:"💬", label:"Text message", sender:"“Mum” (new number)", title:null, body:"“Hi it's me, dropped my phone in the toilet, this is my temp number — can you send money for a new one urgently?”", meta:"unrecognized number", correct:"block", tip:"New number, urgency, and a money request is a very common impersonation scam — call the old number to check first."},
+    {kind:"update", ic:"🔧", label:"Software update", sender:"Endpoint Manager", title:"Security patch KB-2026-114 ready", body:"One-click install, applies automatically tonight if you skip it.", meta:"same tool that's prompted before", correct:"trust", tip:"Familiar source, no command line, no urgency — a normal update."},
+    {kind:"video", ic:"🎥", label:"Video call", sender:"“Your manager”", title:null, body:"“Camera's glitching today — can you approve this invoice while we're on the call? It's urgent.”", meta:"audio delayed, face blurred by “bad connection”", correct:"block", tip:"Deepfake voice/video scams often hide behind “bad connection” to dodge scrutiny — verify urgent money requests on a second channel."},
+    {kind:"chat", ic:"👥", label:"Team chat", sender:"Colleague (verified account)", title:null, body:"“Hey, can you resend me the deck from yesterday's meeting?”", meta:"familiar tone, ongoing thread", correct:"trust", tip:"Low-stakes ask between colleagues — nothing sensitive changes hands."}
+  ];
+
+  var state = { order: [], idx: 0, score: 0, streak: 0, bestStreak: 0, results: [] };
+  var currentPhase = "intro";
+  var dragging = false, startX = 0, curX = 0, animating = false;
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ var d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+
+  function showPhase(p){
+    currentPhase = p;
+    $("phase-intro").hidden = p !== "intro";
+    $("phase-round").hidden = p !== "round";
+    $("phase-final").hidden = p !== "final";
+    $("hud").classList.toggle("show", p === "round");
+    $("progressTrack").classList.toggle("show", p === "round");
+  }
+
+  function shuffledOrder(){
+    var arr = []; for (var i=0;i<CARDS.length;i++) arr.push(i);
+    for (var j=arr.length-1;j>0;j--){ var k=Math.floor(Math.random()*(j+1)); var t=arr[j]; arr[j]=arr[k]; arr[k]=t; }
+    return arr;
+  }
+
+  function qrPattern(seed){
+    var cells = "", n = seed || 7;
+    for (var i=0;i<36;i++){
+      n = (n * 9301 + 49297) % 233280;
+      cells += '<span class="' + ((n/233280) > .42 ? "on" : "off") + '"></span>';
+    }
+    return '<div class="qr-grid">' + cells + '</div>';
+  }
+
+  function updateHud(){
+    $("hudRound").textContent = Math.min(state.idx+1, CARDS.length);
+    $("hudStreak").textContent = state.streak;
+    $("hudScore").textContent = state.score;
+    $("progressFill").style.width = Math.round((state.idx / CARDS.length) * 100) + "%";
+  }
+
+  function renderCard(){
+    var c = CARDS[state.order[state.idx]];
+    var card = $("card");
+    card.style.transition = "none";
+    card.style.transform = "translateX(0) rotate(0)";
+    $("stampTrust").style.opacity = 0;
+    $("stampBlock").style.opacity = 0;
+
+    $("cardIcon").textContent = c.ic;
+    $("cardKind").textContent = c.label;
+    $("cardSender").textContent = c.sender;
+    $("cardTitle").textContent = c.title || "";
+    $("cardTitle").style.display = c.title ? "" : "none";
+    $("cardBody").textContent = c.body || "";
+    $("cardBody").style.display = c.body ? "" : "none";
+    $("cardMeta").textContent = c.meta;
+
+    var extra = $("cardExtra");
+    extra.innerHTML = "";
+    if (c.extra) {
+      var line = document.createElement("div");
+      line.style.fontFamily = "var(--font-mono)";
+      line.style.fontSize = "11.5px";
+      line.style.color = "var(--ink-faint)";
+      line.style.marginTop = "4px";
+      line.textContent = c.extra;
+      extra.appendChild(line);
+    }
+    if (c.kind === "qr") { extra.innerHTML += qrPattern(state.idx + 3); }
+
+    updateHud();
+    requestAnimationFrame(function(){ card.style.transition = ""; });
+  }
+
+  function setDragTransform(dx){
+    var card = $("card");
+    card.style.transform = "translateX(" + dx + "px) rotate(" + (dx/18) + "deg)";
+    $("stampTrust").style.opacity = Math.max(0, Math.min(1, dx/110));
+    $("stampBlock").style.opacity = Math.max(0, Math.min(1, -dx/110));
+  }
+
+  function onPointerDown(e){
+    if (animating) return;
+    dragging = true; startX = e.clientX; curX = 0;
+    $("card").setPointerCapture && e.pointerId != null && $("card").setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e){
+    if (!dragging) return;
+    curX = e.clientX - startX;
+    setDragTransform(curX);
+  }
+  function onPointerUp(){
+    if (!dragging) return;
+    dragging = false;
+    if (Math.abs(curX) > 95) {
+      commit(curX > 0 ? "trust" : "block");
+    } else {
+      $("card").style.transform = "translateX(0) rotate(0)";
+      $("stampTrust").style.opacity = 0;
+      $("stampBlock").style.opacity = 0;
+    }
+    curX = 0;
+  }
+
+  function commit(decision){
+    if (animating || currentPhase !== "round") return;
+    animating = true;
+    var card = $("card");
+    var flyX = decision === "trust" ? 520 : -520;
+    var flyR = decision === "trust" ? 22 : -22;
+    card.style.transform = "translateX(" + flyX + "px) rotate(" + flyR + "deg)";
+    card.style.opacity = "0";
+    if (decision === "trust") $("stampTrust").style.opacity = 1; else $("stampBlock").style.opacity = 1;
+
+    evaluate(decision);
+
+    setTimeout(function(){
+      card.style.opacity = "1";
+      state.idx++;
+      if (state.idx >= CARDS.length) {
+        showFinal();
+      } else {
+        renderCard();
+      }
+      animating = false;
+    }, 260);
+  }
+
+  function evaluate(decision){
+    var c = CARDS[state.order[state.idx]];
+    var isCorrect = decision === c.correct;
+    var bonus = isCorrect ? Math.min(state.streak, 5) * 2 : 0;
+    var pts = isCorrect ? 10 + bonus : 0;
+    state.score += pts;
+    if (isCorrect) { state.streak++; state.bestStreak = Math.max(state.bestStreak, state.streak); }
+    else { state.streak = 0; }
+
+    state.results.push({ label: c.label, sender: c.sender, correct: c.correct, isCorrect: isCorrect, tip: c.tip });
+
+    var strip = $("feedbackStrip");
+    strip.className = "feedback-strip " + (isCorrect ? "good" : "bad");
+    strip.innerHTML =
+      '<div class="fb-head">' + (isCorrect ? "✓ Good call" : "✗ Not this time") + (pts ? " · +" + pts + " pts" : "") + '</div>' +
+      esc(c.tip);
+    updateHud();
+  }
+
+  function gradeFor(pct){
+    if (pct >= 85) return { label: "Instinct Master", color: "var(--trust)", bg: "var(--trust-soft)" };
+    if (pct >= 65) return { label: "Sharp Instincts", color: "var(--streak)", bg: "var(--streak-soft)" };
+    if (pct >= 40) return { label: "Getting Sharper", color: "var(--streak)", bg: "var(--streak-soft)" };
+    return { label: "Trust Your Gut Less", color: "var(--block)", bg: "var(--block-soft)" };
+  }
+
+  function showFinal(){
+    var correctCount = state.results.filter(function(r){ return r.isCorrect; }).length;
+    var pct = Math.round((correctCount / CARDS.length) * 100);
+    var g = gradeFor(pct);
+    var badge = $("gradeBadge");
+    badge.textContent = g.label;
+    badge.style.color = g.color;
+    badge.style.background = g.bg;
+    badge.style.border = "1px solid " + g.color;
+
+    $("finalPct").innerHTML = pct + '<span>%</span>';
+    $("finalSub").textContent = correctCount + " of " + CARDS.length + " calls made correctly.";
+    $("statScore").textContent = state.score;
+    $("statStreak").textContent = state.bestStreak;
+
+    var missed = state.results.filter(function(r){ return !r.isCorrect; });
+    var wrap = $("recapWrap"), list = $("recapList");
+    if (missed.length === 0) {
+      list.innerHTML = '<div class="recap-item"><span class="ric">🎯</span><span>Clean sweep — every single call was right.</span></div>';
+    } else {
+      list.innerHTML = missed.map(function(r){
+        return '<div class="recap-item"><span class="ric">' + (r.correct === "block" ? "🚩" : "✅") + '</span><span><strong style="color:var(--ink)">' + esc(r.sender) + '</strong> — ' + esc(r.tip) + '</span></div>';
+      }).join("");
+    }
+    wrap.hidden = false;
+
+    showPhase("final");
+  }
+
+  function startGame(){
+    state.order = shuffledOrder();
+    state.idx = 0; state.score = 0; state.streak = 0; state.bestStreak = 0; state.results = [];
+    $("feedbackStrip").className = "feedback-strip placeholder";
+    $("feedbackStrip").textContent = "Swipe or tap a button to make your first call.";
+    showPhase("round");
+    renderCard();
+  }
+
+  var cardEl = $("card");
+  cardEl.addEventListener("pointerdown", onPointerDown);
+  cardEl.addEventListener("pointermove", onPointerMove);
+  cardEl.addEventListener("pointerup", onPointerUp);
+  cardEl.addEventListener("pointercancel", onPointerUp);
+
+  $("startBtn").addEventListener("click", startGame);
+  $("replayBtn").addEventListener("click", startGame);
+  $("blockBtn").addEventListener("click", function(){ commit("block"); });
+  $("trustBtn").addEventListener("click", function(){ commit("trust"); });
+
+  document.addEventListener("keydown", function(e){
+    if (currentPhase !== "round") return;
+    if (e.key === "ArrowLeft") commit("block");
+    else if (e.key === "ArrowRight") commit("trust");
+  });
+
+  function snapshot(){ return { state: state, phase: currentPhase }; }
+  function boot(data){
+    if (data && data.state && data.phase === "round") {
+      state = data.state; showPhase("round"); renderCard();
+    } else if (data && data.state && data.phase === "final") {
+      state = data.state; showFinal();
+    } else {
+      showPhase("intro");
+    }
+  }
+  if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(snapshot);
+  if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot);
+  else boot(window.claude && window.claude.hot ? window.claude.hot.data : null);
+})();
+</script>
+</body>
+</html>
