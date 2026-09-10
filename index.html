@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A fast swipe-card game for Cyber Awareness Month — trust it or block it across 14 real-world phishing, smishing, and scam scenarios.">
+<title>Red Flag Rush</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+  :root{
+    --bg:#000000;
+    --bg-2:#0a0612;
+    --surface:#241238;
+    --surface-2:#2f1848;
+    --surface-3:#3a2058;
+    --line:#43265f;
+    --line-soft:#33194a;
+    --ink:#f5f1fb;
+    --ink-dim:#c1acd9;
+    --ink-faint:#8870a8;
+    --trust:#29e2c9;
+    --trust-soft:#123832;
+    --trust-line:#1f6e60;
+    --block:#ff4d8d;
+    --block-soft:#3a1226;
+    --block-line:#7a2949;
+    --streak:#ffd23f;
+    --streak-soft:#3a3116;
+    --radius-lg:26px;
+    --radius-md:16px;
+    --radius-sm:10px;
+    --font-display:'Unbounded',system-ui,sans-serif;
+    --font-body:'Manrope',system-ui,sans-serif;
+    --font-mono:'Space Mono',ui-monospace,monospace;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    margin:0;
+  }
+  h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;}
+  p{margin:0;line-height:1.55;}
+  button{font-family:inherit;cursor:pointer;}
+  :focus-visible{outline:3px solid var(--streak);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important;} }
+  [hidden]{display:none!important;}
+
+  .stage{min-height:100dvh;display:flex;justify-content:center;padding:32px 16px 44px;}
+  .shell{width:100%;max-width:460px;}
+
+  .brand-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand-badge{
+    width:34px;height:34px;border-radius:10px;
+    overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .brand-badge img{width:100%;height:100%;object-fit:cover;display:block;}
+  .brand-name{font-family:var(--font-display);font-weight:700;font-size:16.5px;}
+  .brand-sub{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);}
+
+  .hud{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    font-family:var(--font-mono);
+    font-size:13.5px;
+    color:var(--ink-dim);
+    background:var(--surface);
+    border:1px solid var(--line-soft);
+    border-radius:999px;
+    padding:9px 16px;
+    margin-bottom:18px;
+    font-variant-numeric:tabular-nums;
+  }
+  .hud.show{display:flex;}
+  .hud strong{color:var(--ink);}
+  .hud .streakflame{color:var(--streak);font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',var(--font-mono);}
+
+  .progress-track{
+    height:5px;border-radius:4px;background:var(--surface-2);
+    margin-bottom:22px;overflow:hidden;display:none;
+  }
+  .progress-track.show{display:block;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--trust),var(--streak));border-radius:4px;transition:width .35s ease;}
+
+  /* ---------- Intro ---------- */
+  .intro-card{
+    background:var(--surface);
+    border:1px solid var(--line-soft);
+    border-radius:var(--radius-lg);
+    padding:28px 24px 26px;
+  }
+  .eyebrow{
+    font-family:var(--font-mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--streak);display:block;margin-bottom:10px;
+  }
+  .intro-card h1{font-size:clamp(1.7rem,7vw,2.15rem);letter-spacing:-.01em;}
+  .intro-lede{margin-top:12px;color:var(--ink-dim);font-size:16px;}
+
+  .demo-row{
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    margin:24px 0 22px;
+  }
+  .demo-pill{
+    font-family:var(--font-mono);font-size:12.5px;font-weight:700;
+    padding:8px 14px;border-radius:999px;display:flex;align-items:center;gap:6px;
+  }
+  .demo-pill.block{background:var(--block-soft);color:var(--block);border:1px solid var(--block-line);}
+  .demo-pill.trust{background:var(--trust-soft);color:var(--trust);border:1px solid var(--trust-line);}
+  .demo-card-mini{
+    width:64px;height:80px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:22px;opacity:.6;
+    font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
+  }
+
+  .btn{border:none;border-radius:14px;padding:16px 22px;font-size:16.5px;font-weight:700;font-family:var(--font-display);transition:transform .12s ease, filter .12s ease;}
+  .btn:hover{filter:brightness(1.08);}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--streak);color:#241a00;width:100%;}
+
+  .topics-line{margin-top:16px;font-size:13px;color:var(--ink-faint);text-align:center;}
+
+  .name-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px;}
+  .name-row label{font-size:13.5px;color:var(--ink-dim);}
+  .name-row input{
+    flex:1 1 180px;
+    background:var(--surface-2);
+    border:1px solid var(--line-soft);
+    border-radius:var(--radius-sm);
+    padding:10px 12px;
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:14px;
+  }
+  .name-row input::placeholder{color:var(--ink-faint);}
+  .name-row input.error{border-color:var(--block);}
+  .name-error{width:100%;font-size:12.5px;color:var(--block);margin:-10px 0 4px;display:none;}
+  .name-error.show{display:block;}
+
+  /* ---------- Round ---------- */
+  .deck{position:relative;height:322px;margin-bottom:20px;}
+  .deck-shadow{
+    position:absolute;inset:0;border-radius:var(--radius-lg);
+    background:var(--surface-2);border:1px solid var(--line-soft);
+  }
+  .deck-shadow.s1{transform:scale(.96) translateY(10px);opacity:.7;}
+  .deck-shadow.s2{transform:scale(.92) translateY(20px);opacity:.4;}
+
+  .card{
+    position:absolute;inset:0;
+    background:var(--surface);
+    border:1px solid var(--line-soft);
+    border-radius:var(--radius-lg);
+    padding:22px 22px 20px;
+    display:flex;flex-direction:column;
+    touch-action:pan-y;
+    user-select:none;
+    box-shadow:0 20px 50px -18px rgba(0,0,0,.55);
+    transition:transform .28s cubic-bezier(.2,.8,.3,1);
+  }
+  .card-kind{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:var(--font-mono);font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--ink-dim);margin-bottom:4px;
+  }
+  .card-kind .ic{font-size:21px;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;}
+  .card-content{flex:1;display:flex;flex-direction:column;justify-content:center;gap:9px;min-height:0;}
+  .card-sender{font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--ink);}
+  .card-title{font-weight:700;font-size:16.5px;color:var(--ink);}
+  .card-body{font-size:15.5px;color:var(--ink-dim);}
+  .card-meta{padding-top:14px;margin-top:14px;font-family:var(--font-mono);font-size:13.5px;color:var(--ink-dim);border-top:1px solid var(--line-soft);}
+  .qr-grid{
+    display:grid;grid-template-columns:repeat(6,1fr);gap:3px;
+    width:96px;height:96px;margin-top:10px;padding:8px;background:#fff;border-radius:8px;
+  }
+  .qr-grid span{border-radius:1px;}
+  .qr-grid span.on{background:#170b28;}
+  .qr-grid span.off{background:transparent;}
+
+  .stamp{
+    position:absolute;top:26px;
+    font-family:var(--font-display);font-weight:800;font-size:22px;
+    padding:6px 14px;border-radius:10px;border:3px solid;
+    transform:rotate(-18deg);opacity:0;pointer-events:none;
+  }
+  .stamp.trust{right:20px;color:var(--trust);border-color:var(--trust);transform:rotate(14deg);}
+  .stamp.block{left:20px;color:var(--block);border-color:var(--block);transform:rotate(-14deg);}
+
+  .decision-row{display:flex;align-items:center;justify-content:center;gap:22px;margin-bottom:18px;}
+  .swipe-btn{
+    width:60px;height:60px;border-radius:50%;
+    border:1.5px solid var(--line);
+    background:var(--surface);
+    color:var(--ink);
+    font-size:24px;
+    line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .12s ease, border-color .12s ease, background .12s ease, filter .12s ease;
+  }
+  .swipe-btn.block{color:var(--block);border-color:var(--block-line);background:var(--block-soft);}
+  .swipe-btn.trust{color:var(--trust);border-color:var(--trust-line);background:var(--trust-soft);}
+  .swipe-btn.block:hover{filter:brightness(1.2);}
+  .swipe-btn.trust:hover{filter:brightness(1.2);}
+  .swipe-btn:active{transform:scale(.92);}
+  .swipe-hint{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);text-align:center;margin-top:6px;}
+  .swipe-btns-wrap{display:flex;gap:22px;}
+  .swipe-col{display:flex;flex-direction:column;align-items:center;}
+
+  .feedback-strip{
+    background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius-md);
+    padding:14px 16px;font-size:14.5px;color:var(--ink-dim);
+  }
+  .feedback-strip .fb-head{
+    display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:700;font-size:15px;margin-bottom:6px;
+  }
+  .feedback-strip.good .fb-head{color:var(--trust);}
+  .feedback-strip.bad .fb-head{color:var(--block);}
+  .feedback-strip.placeholder{color:var(--ink-faint);text-align:center;font-family:var(--font-mono);font-size:13px;}
+
+  /* ---------- Final ---------- */
+  .final-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius-lg);padding:30px 24px 26px;text-align:center;}
+  .grade-badge{display:inline-block;font-family:var(--font-display);font-weight:800;font-size:16px;padding:7px 18px;border-radius:30px;margin-bottom:14px;}
+  .final-pct{font-family:var(--font-mono);font-size:clamp(2.6rem,12vw,3.4rem);font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
+  .final-pct span{font-size:.35em;color:var(--ink-faint);}
+  .final-sub{margin-top:8px;color:var(--ink-dim);font-size:15px;}
+
+  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:22px 0;}
+  .stat-tile{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:var(--radius-md);padding:14px;}
+  .stat-tile .num{font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--streak);font-variant-numeric:tabular-nums;}
+  .stat-tile .lab{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+
+  .recap-list{text-align:left;margin-bottom:22px;}
+  .recap-item{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line-soft);font-size:14px;color:var(--ink-dim);}
+  .recap-item:first-child{border-top:none;}
+  .recap-item .ric{flex-shrink:0;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;font-size:15px;}
+  .recap-title{font-family:var(--font-display);font-weight:700;font-size:14.5px;color:var(--ink);margin-bottom:14px;text-align:left;}
+
+  .footer-note{text-align:center;font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);margin-top:20px;}
+
+  .timer-row{display:none;align-items:center;gap:10px;margin-bottom:14px;}
+  .timer-row.show{display:flex;}
+  .timer-track{flex:1;height:6px;border-radius:4px;background:var(--surface-2);overflow:hidden;}
+  .timer-fill{height:100%;width:100%;background:var(--trust);border-radius:4px;transition:width .12s linear, background .3s ease;}
+  .timer-num{font-family:var(--font-mono);font-size:13px;color:var(--ink-dim);min-width:2.6ch;text-align:right;font-variant-numeric:tabular-nums;}
+
+  @media (max-width:400px){
+    .deck{height:300px;}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="shell">
+    <div class="brand-row">
+      <div class="brand">
+        <div class="brand-badge"><img src="data:image/png;base64,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" alt="Woodside logo"></div>
+        <div>
+          <div class="brand-name">Red Flag Rush</div>
+          <div class="brand-sub">Cyber Awareness Month 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud" id="hud">
+      <span><strong id="hudRound">1</strong>/14</span>
+      <span class="streakflame">🔥 <strong id="hudStreak">0</strong></span>
+      <span><strong id="hudScore">0</strong> pts</span>
+    </div>
+    <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="timer-row" id="timerRow">
+      <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+      <span class="timer-num" id="timerNum">15s</span>
+    </div>
+
+    <!-- INTRO -->
+    <section id="phase-intro">
+      <div class="intro-card">
+        <span class="eyebrow">Trust your gut — fast</span>
+        <h1>Swipe it or block it.</h1>
+        <p class="intro-lede">14 real-looking messages, calls, texts and pop-ups fly by one at a time — you've got 15 seconds each. Swipe right (or tap ✓) if you'd trust it. Swipe left (or tap ✕) if you'd block it. No penalties for a wrong guess — just see how sharp your instincts are.</p>
+
+        <div class="demo-row">
+          <div class="demo-pill block">✕ BLOCK</div>
+          <div class="demo-card-mini">📩</div>
+          <div class="demo-pill trust">TRUST ✓</div>
+        </div>
+
+        <div class="name-row">
+          <label for="playerName">Your first name</label>
+          <input id="playerName" type="text" maxlength="24" placeholder="e.g. Ram" autocomplete="off">
+        </div>
+        <p class="name-error" id="nameError">Enter your first name to start.</p>
+
+        <button class="btn btn-primary" id="startBtn">Start the rush</button>
+        <p class="topics-line">Phishing · smishing · deepfakes · QR scams · social engineering · everyday IT</p>
+      </div>
+    </section>
+
+    <!-- ROUND -->
+    <section id="phase-round" hidden>
+      <div class="deck">
+        <div class="deck-shadow s2"></div>
+        <div class="deck-shadow s1"></div>
+        <div class="card" id="card">
+          <div class="stamp trust" id="stampTrust">TRUST</div>
+          <div class="stamp block" id="stampBlock">BLOCK</div>
+          <div class="card-kind"><span class="ic" id="cardIcon">✉️</span><span id="cardKind">Email</span></div>
+          <div class="card-content">
+            <div class="card-sender" id="cardSender"></div>
+            <div class="card-title" id="cardTitle"></div>
+            <div class="card-body" id="cardBody"></div>
+            <div id="cardExtra"></div>
+          </div>
+          <div class="card-meta" id="cardMeta"></div>
+        </div>
+      </div>
+
+      <div class="decision-row">
+        <div class="swipe-col">
+          <button class="swipe-btn block" id="blockBtn" aria-label="Block">✕</button>
+          <span class="swipe-hint">block</span>
+        </div>
+        <div class="swipe-col">
+          <button class="swipe-btn trust" id="trustBtn" aria-label="Trust">✓</button>
+          <span class="swipe-hint">trust</span>
+        </div>
+      </div>
+
+      <div class="feedback-strip placeholder" id="feedbackStrip">Swipe or tap a button to make your first call.</div>
+    </section>
+
+    <!-- FINAL -->
+    <section id="phase-final" hidden>
+      <div class="final-card">
+        <span class="grade-badge" id="gradeBadge"></span>
+        <div class="final-pct" id="finalPct"></div>
+        <p class="final-sub" id="finalSub"></p>
+
+        <div class="stat-row">
+          <div class="stat-tile"><div class="num" id="statScore">0</div><div class="lab">total points</div></div>
+          <div class="stat-tile"><div class="num" id="statStreak">0</div><div class="lab">best streak</div></div>
+        </div>
+
+        <div id="recapWrap">
+          <div class="recap-title">Worth a second look</div>
+          <div class="recap-list" id="recapList"></div>
+        </div>
+
+        <button class="btn btn-primary" id="replayBtn">Run it again</button>
+        <p class="footer-note">Red Flag Rush · Woodside Cyber Awareness Month 2026</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var CARDS = [
+    {kind:"email", ic:"✉️", label:"Email", sender:"IT Service Desk", extra:"it-service@woodside-support.net", title:"Password expires in 2 hours", body:"Your account password will expire shortly. Reset immediately to avoid lockout.", meta:"received 3 min ago", correct:"block", tip:"Look-alike domain plus a manufactured 2-hour deadline — real resets come from your actual company domain with no countdown."},
+    {kind:"sms", ic:"💬", label:"Text message", sender:"+1 (302) 555-0147", title:null, body:"Your package couldn't be delivered. Pay a $2.50 customs fee to reschedule: bit.ly/pkg-fee2", meta:"unknown sender", correct:"block", tip:"A tiny “fee” texted from an unknown number is one of the most common smishing scripts — couriers don't collect fees by text link."},
+    {kind:"calendar", ic:"📅", label:"Calendar invite", sender:"Priya Nair", title:"Quarterly Planning Sync", body:"Thursday 10:00–11:00 AM · Conf Room 4B. Agenda attached.", meta:"a colleague you already work with", correct:"trust", tip:"Known sender, expected topic, no links or urgency — an ordinary invite."},
+    {kind:"call", ic:"☎️", label:"Voicemail transcript", sender:"Unknown number", title:null, body:"“Hi, it's your CEO — stuck in a meeting, need you to buy 5 gift cards right now. Don't mention this to anyone.”", meta:"38 second voicemail", correct:"block", tip:"Secrecy, gift cards, and a request that skips every approval step — classic executive impersonation, now often done with cloned AI voices."},
+    {kind:"qr", ic:"▦", label:"QR code", sender:"Sticker on a parking meter", title:"Scan to pay for parking", body:null, meta:"sticker looks slightly crooked, placed over the original code", correct:"block", tip:"A sticker slapped over an existing code is a common “quishing” move — use the official app or pay station instead."},
+    {kind:"mfa", ic:"🔐", label:"Sign-in approval", sender:"Authenticator app", title:"Approve sign-in?", body:"Chrome on Windows · Perth, WA · requested 40 seconds ago.", meta:"you just tried signing in yourself", correct:"trust", tip:"Device, location and timing all line up with something you actually just did — that's what a normal approval looks like."},
+    {kind:"dm", ic:"💼", label:"LinkedIn DM", sender:"Recruiter · 1st-degree connection", title:null, body:"“Loved your profile — $9,500/month remote role. Just complete this form with your bank details to set up payroll before the interview.”", meta:"direct message", correct:"block", tip:"No legitimate employer needs your bank details before you've even interviewed."},
+    {kind:"usb", ic:"💾", label:"Found USB drive", sender:"Left in the parking lot", title:"Label: “Q3 Payroll — Confidential”", body:null, meta:"no owner in sight", correct:"block", tip:"A found drive is a classic “USB drop” — plugging it in can run code automatically. Hand it to security instead."},
+    {kind:"browser", ic:"⚠️", label:"Browser pop-up", sender:"random-deals-site.com", title:"3 viruses found on your device", body:"Click to remove now and protect your files.", meta:"appeared while browsing", correct:"block", tip:"A webpage can't scan your device for viruses — this alert exists purely to get you to install something."},
+    {kind:"newsletter", ic:"📰", label:"Internal newsletter", sender:"Woodside Internal Comms", title:"This month's safety recap", body:"A short read on this quarter's safety wins and reminders.", meta:"monthly, as usual", correct:"trust", tip:"Routine, expected, low-stakes, and asks you to do nothing urgent."},
+    {kind:"sms", ic:"💬", label:"Text message", sender:"“Mum” (new number)", title:null, body:"“Hi it's me, dropped my phone in the toilet, this is my temp number — can you send money for a new one urgently?”", meta:"unrecognized number", correct:"block", tip:"New number, urgency, and a money request is a very common impersonation scam — call the old number to check first."},
+    {kind:"update", ic:"🔧", label:"Software update", sender:"Endpoint Manager", title:"Security patch KB-2026-114 ready", body:"One-click install, applies automatically tonight if you skip it.", meta:"same tool that's prompted before", correct:"trust", tip:"Familiar source, no command line, no urgency — a normal update."},
+    {kind:"video", ic:"🎥", label:"Video call", sender:"“Your manager”", title:null, body:"“Camera's glitching today — can you approve this invoice while we're on the call? It's urgent.”", meta:"audio delayed, face blurred by “bad connection”", correct:"block", tip:"Deepfake voice/video scams often hide behind “bad connection” to dodge scrutiny — verify urgent money requests on a second channel."},
+    {kind:"chat", ic:"👥", label:"Team chat", sender:"Colleague (verified account)", title:null, body:"“Hey, can you resend me the deck from yesterday's meeting?”", meta:"familiar tone, ongoing thread", correct:"trust", tip:"Low-stakes ask between colleagues — nothing sensitive changes hands."}
+  ];
+
+  var state = { order: [], idx: 0, score: 0, streak: 0, bestStreak: 0, results: [], name: "" };
+  var currentPhase = "intro";
+  var dragging = false, startX = 0, curX = 0, animating = false;
+  var TIME_PER_ROUND = 15000;
+  var timerHandle = null, timerStart = 0;
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ var d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+
+  function showPhase(p){
+    currentPhase = p;
+    $("phase-intro").hidden = p !== "intro";
+    $("phase-round").hidden = p !== "round";
+    $("phase-final").hidden = p !== "final";
+    $("hud").classList.toggle("show", p === "round");
+    $("progressTrack").classList.toggle("show", p === "round");
+    $("timerRow").classList.toggle("show", p === "round");
+    if (p !== "round") clearTimer();
+  }
+
+  function clearTimer(){
+    if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+  }
+
+  function updateTimerVisual(frac, secs){
+    var fill = $("timerFill");
+    fill.style.width = Math.max(0, frac * 100) + "%";
+    fill.style.background = frac <= 0.33 ? "var(--block)" : (frac <= 0.6 ? "var(--streak)" : "var(--trust)");
+    if (typeof secs === "number") $("timerNum").textContent = secs + "s";
+  }
+
+  function startTimer(){
+    clearTimer();
+    timerStart = Date.now();
+    updateTimerVisual(1, Math.ceil(TIME_PER_ROUND / 1000));
+    timerHandle = setInterval(function(){
+      var remaining = Math.max(0, TIME_PER_ROUND - (Date.now() - timerStart));
+      updateTimerVisual(remaining / TIME_PER_ROUND, Math.ceil(remaining / 1000));
+      if (remaining <= 0) {
+        clearTimer();
+        commit("timeout");
+      }
+    }, 100);
+  }
+
+  function shuffledOrder(){
+    var arr = []; for (var i=0;i<CARDS.length;i++) arr.push(i);
+    for (var j=arr.length-1;j>0;j--){ var k=Math.floor(Math.random()*(j+1)); var t=arr[j]; arr[j]=arr[k]; arr[k]=t; }
+    return arr;
+  }
+
+  function qrPattern(seed){
+    var cells = "", n = seed || 7;
+    for (var i=0;i<36;i++){
+      n = (n * 9301 + 49297) % 233280;
+      cells += '<span class="' + ((n/233280) > .42 ? "on" : "off") + '"></span>';
+    }
+    return '<div class="qr-grid">' + cells + '</div>';
+  }
+
+  function updateHud(){
+    $("hudRound").textContent = Math.min(state.idx+1, CARDS.length);
+    $("hudStreak").textContent = state.streak;
+    $("hudScore").textContent = state.score;
+    $("progressFill").style.width = Math.round((state.idx / CARDS.length) * 100) + "%";
+  }
+
+  function renderCard(){
+    var c = CARDS[state.order[state.idx]];
+    var card = $("card");
+    card.style.transition = "none";
+    card.style.transform = "translateX(0) rotate(0)";
+    $("stampTrust").style.opacity = 0;
+    $("stampBlock").style.opacity = 0;
+
+    $("cardIcon").textContent = c.ic;
+    $("cardKind").textContent = c.label;
+    $("cardSender").textContent = c.sender;
+    $("cardTitle").textContent = c.title || "";
+    $("cardTitle").style.display = c.title ? "" : "none";
+    $("cardBody").textContent = c.body || "";
+    $("cardBody").style.display = c.body ? "" : "none";
+    $("cardMeta").textContent = c.meta;
+
+    var extra = $("cardExtra");
+    extra.innerHTML = "";
+    if (c.extra) {
+      var line = document.createElement("div");
+      line.style.fontFamily = "var(--font-mono)";
+      line.style.fontSize = "11.5px";
+      line.style.color = "var(--ink-faint)";
+      line.style.marginTop = "4px";
+      line.textContent = c.extra;
+      extra.appendChild(line);
+    }
+    if (c.kind === "qr") { extra.innerHTML += qrPattern(state.idx + 3); }
+
+    updateHud();
+    startTimer();
+    requestAnimationFrame(function(){ card.style.transition = ""; });
+  }
+
+  function setDragTransform(dx){
+    var card = $("card");
+    card.style.transform = "translateX(" + dx + "px) rotate(" + (dx/18) + "deg)";
+    $("stampTrust").style.opacity = Math.max(0, Math.min(1, dx/110));
+    $("stampBlock").style.opacity = Math.max(0, Math.min(1, -dx/110));
+  }
+
+  function onPointerDown(e){
+    if (animating) return;
+    dragging = true; startX = e.clientX; curX = 0;
+    $("card").setPointerCapture && e.pointerId != null && $("card").setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e){
+    if (!dragging) return;
+    curX = e.clientX - startX;
+    setDragTransform(curX);
+  }
+  function onPointerUp(){
+    if (!dragging) return;
+    dragging = false;
+    if (Math.abs(curX) > 95) {
+      commit(curX > 0 ? "trust" : "block");
+    } else {
+      $("card").style.transform = "translateX(0) rotate(0)";
+      $("stampTrust").style.opacity = 0;
+      $("stampBlock").style.opacity = 0;
+    }
+    curX = 0;
+  }
+
+  function commit(decision){
+    if (animating || currentPhase !== "round") return;
+    animating = true;
+    clearTimer();
+    var card = $("card");
+    if (decision === "timeout") {
+      card.style.transform = "translateY(24px) scale(.96)";
+      card.style.opacity = "0";
+    } else {
+      var flyX = decision === "trust" ? 520 : -520;
+      var flyR = decision === "trust" ? 22 : -22;
+      card.style.transform = "translateX(" + flyX + "px) rotate(" + flyR + "deg)";
+      card.style.opacity = "0";
+      if (decision === "trust") $("stampTrust").style.opacity = 1; else $("stampBlock").style.opacity = 1;
+    }
+
+    evaluate(decision);
+
+    setTimeout(function(){
+      card.style.opacity = "1";
+      state.idx++;
+      if (state.idx >= CARDS.length) {
+        showFinal();
+      } else {
+        renderCard();
+      }
+      animating = false;
+    }, 260);
+  }
+
+  function evaluate(decision){
+    var c = CARDS[state.order[state.idx]];
+    var isCorrect = decision === c.correct;
+    var bonus = isCorrect ? Math.min(state.streak, 5) * 2 : 0;
+    var pts = isCorrect ? 10 + bonus : 0;
+    state.score += pts;
+    if (isCorrect) { state.streak++; state.bestStreak = Math.max(state.bestStreak, state.streak); }
+    else { state.streak = 0; }
+
+    state.results.push({ label: c.label, sender: c.sender, correct: c.correct, isCorrect: isCorrect, tip: c.tip });
+
+    var headText = decision === "timeout" ? "⏱ Time's up" : (isCorrect ? "✓ Good call" : "✗ Not this time");
+    var strip = $("feedbackStrip");
+    strip.className = "feedback-strip " + (isCorrect ? "good" : "bad");
+    strip.innerHTML =
+      '<div class="fb-head">' + headText + (pts ? " · +" + pts + " pts" : "") + '</div>' +
+      esc(c.tip);
+    updateHud();
+  }
+
+  function gradeFor(pct){
+    if (pct >= 85) return { label: "Instinct Master", color: "var(--trust)", bg: "var(--trust-soft)" };
+    if (pct >= 65) return { label: "Sharp Instincts", color: "var(--streak)", bg: "var(--streak-soft)" };
+    if (pct >= 40) return { label: "Getting Sharper", color: "var(--streak)", bg: "var(--streak-soft)" };
+    return { label: "Trust Your Gut Less", color: "var(--block)", bg: "var(--block-soft)" };
+  }
+
+  function showFinal(){
+    var correctCount = state.results.filter(function(r){ return r.isCorrect; }).length;
+    var pct = Math.round((correctCount / CARDS.length) * 100);
+    var g = gradeFor(pct);
+    var badge = $("gradeBadge");
+    badge.textContent = g.label;
+    badge.style.color = g.color;
+    badge.style.background = g.bg;
+    badge.style.border = "1px solid " + g.color;
+
+    var namePrefix = state.name ? state.name + " — " : "";
+    $("finalPct").innerHTML = pct + '<span>%</span>';
+    $("finalSub").textContent = namePrefix + correctCount + " of " + CARDS.length + " calls made correctly.";
+    $("statScore").textContent = state.score;
+    $("statStreak").textContent = state.bestStreak;
+
+    var missed = state.results.filter(function(r){ return !r.isCorrect; });
+    var wrap = $("recapWrap"), list = $("recapList");
+    if (missed.length === 0) {
+      list.innerHTML = '<div class="recap-item"><span class="ric">🎯</span><span>Clean sweep — every single call was right.</span></div>';
+    } else {
+      list.innerHTML = missed.map(function(r){
+        return '<div class="recap-item"><span class="ric">' + (r.correct === "block" ? "🚩" : "✅") + '</span><span><strong style="color:var(--ink)">' + esc(r.sender) + '</strong> — ' + esc(r.tip) + '</span></div>';
+      }).join("");
+    }
+    wrap.hidden = false;
+
+    showPhase("final");
+  }
+
+  function tryStart(){
+    var val = $("playerName").value.trim();
+    if (!val) {
+      $("playerName").classList.add("error");
+      $("nameError").classList.add("show");
+      $("playerName").focus();
+      return;
+    }
+    startGame();
+  }
+
+  function startGame(){
+    state.name = $("playerName").value.trim();
+    state.order = shuffledOrder();
+    state.idx = 0; state.score = 0; state.streak = 0; state.bestStreak = 0; state.results = [];
+    $("feedbackStrip").className = "feedback-strip placeholder";
+    $("feedbackStrip").textContent = "Swipe or tap a button to make your first call.";
+    showPhase("round");
+    renderCard();
+  }
+
+  var cardEl = $("card");
+  cardEl.addEventListener("pointerdown", onPointerDown);
+  cardEl.addEventListener("pointermove", onPointerMove);
+  cardEl.addEventListener("pointerup", onPointerUp);
+  cardEl.addEventListener("pointercancel", onPointerUp);
+
+  $("startBtn").addEventListener("click", tryStart);
+  $("replayBtn").addEventListener("click", startGame);
+  $("playerName").addEventListener("input", function(){
+    $("playerName").classList.remove("error");
+    $("nameError").classList.remove("show");
+  });
+  $("playerName").addEventListener("keydown", function(e){
+    if (e.key === "Enter") tryStart();
+  });
+  $("blockBtn").addEventListener("click", function(){ commit("block"); });
+  $("trustBtn").addEventListener("click", function(){ commit("trust"); });
+
+  document.addEventListener("keydown", function(e){
+    if (currentPhase !== "round") return;
+    if (e.key === "ArrowLeft") commit("block");
+    else if (e.key === "ArrowRight") commit("trust");
+  });
+
+  function snapshot(){ return { state: state, phase: currentPhase }; }
+  function boot(data){
+    if (data && data.state && data.phase === "round") {
+      state = data.state; showPhase("round"); renderCard();
+    } else if (data && data.state && data.phase === "final") {
+      state = data.state; showFinal();
+    } else {
+      showPhase("intro");
+    }
+  }
+  if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(snapshot);
+  if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot);
+  else boot(window.claude && window.claude.hot ? window.claude.hot.data : null);
+})();
+</script>
+</body>
+</html>
